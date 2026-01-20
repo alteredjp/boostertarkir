@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tarkir: Dragonstorm — Collector Booster Simulator</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tarkir: Dragonstorm — Collector Booster Simulator</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Collector Booster — Tarkir: Dragonstorm</h1>
+      <p class="sub">Simulador premium de abertura (foil, stats e binder).</p>
+    </div>
+
+    <div class="actions">
+      <button id="btnLoad" class="ghost">Carregar cartas</button>
+      <button id="btnOpen" disabled>ABRIR BOOSTER</button>
+
+      <button id="btnNext" disabled>Revelar próxima</button>
+      <button id="btnToLand" class="ghost" disabled>Revelar até a Land</button>
+      <button id="btnAll" class="ghost" disabled>Revelar todas</button>
+
+      <button id="btnAuto" class="ghost" disabled>Auto: OFF</button>
+      <button id="btnSound" class="ghost">Som: ON</button>
+
+      <button id="btnLog" class="ghost" disabled>Log</button>
+      <button id="btnVault" class="ghost" disabled>Vault</button>
+      <button id="btnBinder" class="ghost" disabled>Binder</button>
+
+      <button id="btnWipeCache" class="ghost">Limpar cache</button>
+      <button id="btnResetAll" class="danger">RESET TOTAL</button>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="status">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText">Clique em “Carregar cartas”.</span>
+    </div>
+
+    <div class="grid">
+      <section>
+        <div class="openingTop">
+          <div>
+            <h2>Abertura</h2>
+            <p id="summary" class="summary">—</p>
+
+            <!-- BOOSTER STATS -->
+            <div id="boosterStats" class="statsBar hidden">
+              <div class="statBox">
+                <div class="statLabel">Market Price</div>
+                <div class="statValue" id="statMarketPrice">$0.00</div>
+              </div>
+              <div class="statBox">
+                <div class="statLabel">Expected Value (EV)</div>
+                <div class="statValue" id="statEV">$0.00</div>
+              </div>
+              <div class="statBox">
+                <div class="statLabel">Median Value</div>
+                <div class="statValue" id="statMedian">$0.00</div>
+              </div>
+            </div>
+
+            <!-- MAIN STATS -->
+            <div id="mainStats" class="mainStats hidden">
+              <div class="mainStat">
+                <div class="statLabel">Total value</div>
+                <div class="statValue" id="mainTotal">$0.00</div>
+              </div>
+
+              <div class="mainStat">
+                <div class="statLabel">Compared to EV</div>
+                <div class="statValue" id="mainCompared">—</div>
+              </div>
+
+              <div class="mainStat">
+                <div class="statLabel">Rares / Mythics</div>
+                <div class="statValue" id="mainRM">0 / 0</div>
+              </div>
+
+              <div class="mainStat">
+                <div class="statLabel">Foils / Halo</div>
+                <div class="statValue" id="mainFoils">0 / 0</div>
+              </div>
+            </div>
+
+            <!-- QUALITY BAR -->
+            <div id="qualityBarWrap" class="quality hidden">
+              <div class="qualityTop">
+                <span class="statLabel">Qualidade do booster</span>
+                <span id="qualityLabel" class="qualityLabel">—</span>
+              </div>
+              <div class="qualityBar">
+                <div id="qualityFill" class="qualityFill" style="width:0%"></div>
+              </div>
+              <div class="qualityHint" id="qualityHint">—</div>
+            </div>
+
+            <!-- pack money (mantém) -->
+            <div id="packMoney" class="money hidden">
+              <div><b>Valor do pack:</b> <span id="packValue">$0.00</span></div>
+              <div><b>Custo do booster:</b> <span id="boosterCostLabel">$0.00</span></div>
+              <div><b>Resultado:</b> <span id="packProfit">$0.00</span></div>
+            </div>
+          </div>
+
+          <div class="openingMeta">
+            <div class="pill">
+              <span id="revealCount">0</span>/<span id="revealTotal">0</span> reveladas
+            </div>
+
+            <div class="pill subtle">
+              Custo (USD): <span id="boosterCostFixed">24.99</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="cardGrid" class="cardGrid"></div>
+
+        <!-- LOG -->
+        <section id="logPanel" class="hidden">
+          <h2 style="margin-top:18px;">Log</h2>
+          <p class="summary">Tudo que foi revelado neste pack.</p>
+          <ol id="packLog" class="pack"></ol>
+        </section>
+      </section>
+
+      <!-- SIDEBAR -->
+      <aside class="side">
+        <!-- Vault -->
+        <div id="vaultPanel" class="collection hidden">
+          <div class="sideTop">
+            <h2>Vault</h2>
+            <div class="sideActions">
+              <button id="btnVaultClear" class="danger">Limpar</button>
+            </div>
+          </div>
+
+          <p class="hint">
+            Preços vêm do Scryfall e mudam no máximo 1x/dia.
+          </p>
+
+          <div id="vaultStats" class="stats">—</div>
+          <div id="vaultList" class="collectionList"></div>
+        </div>
+
+        <!-- Binder -->
+        <div id="binderPanel" class="collection hidden">
+          <div class="sideTop">
+            <h2>Binder</h2>
+          </div>
+
+          <p class="hint">
+            Binder completo do set — slots faltantes ficam escurecidos até você abrir.
+          </p>
+
+          <div id="binderStats" class="stats">—</div>
+          <div id="binderGrid" class="binderGrid"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <small>Imagens e dados via Scryfall.</small>
+  </footer>
+</div>
+
+<!-- STICKY FOOTER (Main stats em tempo real) -->
+<div id="stickyStats" class="stickyStats hidden">
+  <div class="stickyInner">
+    <div class="stickyItem">
+      <div class="statLabel">Total</div>
+      <div class="statValue" id="stickyTotal">$0.00</div>
+    </div>
+    <div class="stickyItem">
+      <div class="statLabel">vs EV</div>
+      <div class="statValue" id="stickyCompared">—</div>
+    </div>
+    <div class="stickyItem">
+      <div class="statLabel">R/M</div>
+      <div class="statValue" id="stickyRM">0/0</div>
+    </div>
+    <div class="stickyItem">
+      <div class="statLabel">Foil/Halo</div>
+      <div class="statValue" id="stickyFoils">0/0</div>
+    </div>
+    <div class="stickyItem qualityMini">
+      <div class="statLabel">Qualidade</div>
+      <div class="statValue" id="stickyQuality">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PREVIEW -->
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modalBackdrop"></div>
+
+  <div class="modalCard">
+    <button id="btnModalClose" class="modalClose" aria-label="Fechar">
+      <span aria-hidden="true">✕</span>
+    </button>
+
+    <!-- Layout horizontal: imagem esquerda / infos direita -->
+    <div class="modalBody horizontal">
+      <div class="modalLeft">
+        <div class="modalImgWrap">
+          <img id="modalImg" alt="" />
+          <div id="modalFx" class="modalFx"></div>
+        </div>
+      </div>
+
+      <div class="modalRight">
+        <div class="modalTitleRow">
+          <h3 id="modalTitle">—</h3>
+          <span id="modalMana" class="modalMana">—</span>
+        </div>
+
+        <p id="modalLine" class="modalLine">—</p>
+        <p id="modalOracle" class="modalOracle">—</p>
+
+        <div class="modalBottom">
+          <span id="modalPT" class="chip">—</span>
+          <span id="modalLoyalty" class="chip">—</span>
+          <span id="modalPrice" class="chip">—</span>
+        </div>
+
+        <p id="modalSlot" class="modalSlot">—</p>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+  <!-- JS -->
+  <script src="script.js"></script>
+</body>
+</html>
+
+  
+
+  <!-- JS -->
+  <script src="script.js"></script>
+</body>
+</html>
