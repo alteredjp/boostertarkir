@@ -679,7 +679,6 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
   padding-right: 6px;
 }
 
-}
 @media (max-width: 860px){
   .modalBody.horizontal{ grid-template-columns: 1fr; }
 }
@@ -791,4 +790,80 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
   font-weight: 700;
   text-align:center;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+/* =========================
+   v4.1 — MOBILE READY PATCH
+   - Touch affordance
+   - Menos hover em coarse pointers
+   - Safe-area p/ sticky
+   - Cards um pouco menores no celular
+========================= */
+
+/* melhora toque (evita delay e gestos estranhos) */
+button,
+.card,
+.binderCell,
+.modalClose {
+  touch-action: manipulation;
+}
+
+/* safe-area no sticky footer (notch / barra inferior) */
+.stickyStats {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* em telas pequenas, cartas menores (sem destruir o layout) */
+@media (max-width: 520px){
+  :root{
+    --cardW: 148px;
+    --cardH: 206px;
+  }
+
+  .wrap{
+    padding-bottom: 110px; /* dá respiro pro sticky */
+  }
+
+  .actions{
+    justify-content: flex-start;
+  }
+
+  .openingTop{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .openingMeta{
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* modal mais confortável no celular */
+  .modalCard{
+    width: calc(100% - 18px);
+    max-height: calc(100dvh - 18px);
+    overflow: hidden;
+  }
+  .modalBody.horizontal{
+    padding: 16px 12px 12px;
+    gap: 10px;
+  }
+  .modalOracle{
+    max-height: 34dvh; /* evita scroll infinito dentro do modal */
+  }
+}
+
+/* se o device é touch (pointer coarse), hover não manda aqui */
+@media (pointer: coarse){
+  button:hover{ transform:none; }
+  .card:hover{ transform:none; }
+  .binderCell:hover{ transform:none; }
+
+  /* deixa a UI com cara de touch: feedback no toque */
+  .card:active .cardInner{
+    transform: scale(0.985);
+  }
+  .binderCell:active{
+    transform: scale(0.99);
+  }
 }

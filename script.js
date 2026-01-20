@@ -115,6 +115,9 @@ window.addEventListener("load", () => {
      HELPERS
   ========================= */
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const IS_COARSE = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  const REDUCED_MOTION = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 
   function setStatus(kind, text) {
     if (UI.statusDot) UI.statusDot.className = "dot " + (kind || "");
@@ -137,11 +140,13 @@ window.addEventListener("load", () => {
     return isFinite(n) ? n : 0;
   }
   function escapeHtml(s) {
-    return String(s)
-      .replaceAll("&", "&")
-      .replaceAll("<", "<")
-      .replaceAll(">", ">");
-  }
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
   function randInt(max) { return Math.floor(Math.random() * max); }
   function pickOne(arr) { return arr && arr.length ? arr[randInt(arr.length)] : null; }
   function weightedChoice(options) {
@@ -454,48 +459,78 @@ window.addEventListener("load", () => {
      FOIL / TILT TRACKING
   ========================= */
   function attachFoilTilt(el, options = {}) {
-    const maxTilt = options.maxTilt ?? 10;
-    const inner = options.innerSelector ? el.querySelector(options.innerSelector) : null;
+  const maxTilt = options.maxTilt ?? 10;
+  const inner = options.innerSelector ? el.querySelector(options.innerSelector) : null;
 
-    const onMove = (ev) => {
-      const rect = el.getBoundingClientRect();
-      const mx = ((ev.clientX - rect.left) / rect.width) * 100;
-      const my = ((ev.clientY - rect.top) / rect.height) * 100;
+  // v4.1: no touch, tilt contínuo é caro — então vira "tap tilt"
+  const mode = options.mode || (IS_COARSE ? "tap" : "hover");
 
-      const dx = (mx - 50) / 50;
-      const dy = (my - 50) / 50;
+  const applyFromEvent = (ev) => {
+    const rect = el.getBoundingClientRect();
+    const mx = ((ev.clientX - rect.left) / rect.width) * 100;
+    const my = ((ev.clientY - rect.top) / rect.height) * 100;
 
-      const ry = clamp(dx * maxTilt, -maxTilt, maxTilt);
-      const rx = clamp(-dy * maxTilt, -maxTilt, maxTilt);
+    const dx = (mx - 50) / 50;
+    const dy = (my - 50) / 50;
 
-      el.style.setProperty("--mx", clamp(mx, 0, 100).toFixed(2) + "%");
-      el.style.setProperty("--my", clamp(my, 0, 100).toFixed(2) + "%");
-      el.style.setProperty("--rx", rx.toFixed(2) + "deg");
-      el.style.setProperty("--ry", ry.toFixed(2) + "deg");
+    const ry = clamp(dx * maxTilt, -maxTilt, maxTilt);
+    const rx = clamp(-dy * maxTilt, -maxTilt, maxTilt);
 
-      if (inner) {
-        inner.style.setProperty("--rx", rx.toFixed(2) + "deg");
-        inner.style.setProperty("--ry", ry.toFixed(2) + "deg");
-      }
-    };
+    el.style.setProperty("--mx", clamp(mx, 0, 100).toFixed(2) + "%");
+    el.style.setProperty("--my", clamp(my, 0, 100).toFixed(2) + "%");
+    el.style.setProperty("--rx", rx.toFixed(2) + "deg");
+    el.style.setProperty("--ry", ry.toFixed(2) + "deg");
 
-    const onLeave = () => {
-      el.style.setProperty("--mx", "50%");
-      el.style.setProperty("--my", "50%");
-      el.style.setProperty("--rx", "0deg");
-      el.style.setProperty("--ry", "0deg");
-      if (inner) {
-        inner.style.setProperty("--rx", "0deg");
-        inner.style.setProperty("--ry", "0deg");
-      }
-    };
+    if (inner) {
+      inner.style.setProperty("--rx", rx.toFixed(2) + "deg");
+      inner.style.setProperty("--ry", ry.toFixed(2) + "deg");
+    }
+  };
 
-    el.addEventListener("pointermove", onMove);
-    el.addEventListener("pointerleave", onLeave);
-    onLeave();
+  const reset = () => {
+    el.style.setProperty("--mx", "50%");
+    el.style.setProperty("--my", "50%");
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+    if (inner) {
+      inner.style.setProperty("--rx", "0deg");
+      inner.style.setProperty("--ry", "0deg");
+    }
+  };
+
+  // evita duplicar listeners se a função for chamada de novo no mesmo elemento
+  if (el.dataset.tiltAttached === "1") return;
+  el.dataset.tiltAttached = "1";
+
+  if (REDUCED_MOTION) {
+    reset();
+    return;
   }
 
-  /* =========================
+  if (mode === "hover") {
+    el.addEventListener("pointermove", applyFromEvent, { passive: true });
+    el.addEventListener("pointerleave", reset, { passive: true });
+    reset();
+    return;
+  }
+
+  // mode === "tap" (touch)
+  // aplica um tilt breve no toque e volta ao centro
+  let tapTimer = null;
+
+  el.addEventListener("pointerdown", (ev) => {
+    // só reage a toque/pen no modo tap
+    if (ev.pointerType === "mouse") return;
+    applyFromEvent(ev);
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(reset, 180);
+  }, { passive: true });
+
+  el.addEventListener("pointerleave", reset, { passive: true });
+  reset();
+}
+
+     /* =========================
      POOLS
   ========================= */
   function buildPools(tdmRaw, tdcRaw, spgRaw) {
@@ -822,15 +857,15 @@ window.addEventListener("load", () => {
     // Tilt/3D no modal (imagem)
 const wrap = UI.modalImg?.closest(".modalImgWrap");
 if (wrap) {
-  // garante vars reset
   wrap.style.setProperty("--rx", "0deg");
   wrap.style.setProperty("--ry", "0deg");
   wrap.style.setProperty("--mx", "50%");
   wrap.style.setProperty("--my", "50%");
 
-  // aplica tilt/foil tracking no container da imagem do modal
-  attachFoilTilt(wrap, { maxTilt: 10 });
+  // v4.1: hover no desktop, tap no mobile
+  attachFoilTilt(wrap, { maxTilt: 10, mode: IS_COARSE ? "tap" : "hover" });
 }
+
   }
 
   function closeModal() {
