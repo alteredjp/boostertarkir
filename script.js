@@ -1226,7 +1226,7 @@ if (wrap) {
       cardEl.classList.remove("facedown");
       cardEl.classList.add("revealFlip");
       // pequena limpeza depois da animação
-      setTimeout(() => cardEl.classList.remove("revealFlip"), 820);
+      setTimeout(() => cardEl.classList.remove("revealFlip"), 2450);
 
       // som: flip soft + raridade (HALO prior)
       if (soundOn) playFlipSoft();

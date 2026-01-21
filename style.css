@@ -300,6 +300,54 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
   gap: 14px;
   padding: 10px 4px 6px;
 }
+/* =========================
+   v4.2 — DESKTOP DASHBOARD (auto)
+   - 4 colunas no desktop
+   - cartas maiores
+   - “sem molde” (menos borda/menos caixa)
+========================= */
+@media (min-width: 1100px){
+  :root{
+    --cardW: 248px;
+    --cardH: 346px;
+	--tilt-persp: 1200px;
+  }
+  
+/* v4.2 — conserta “sidebar saindo do painel” no desktop */
+.wrap{
+  max-width: 1480px;
+}
+
+.stickyInner{
+  max-width: 1480px;
+}
+
+/* garante que o grid principal respeita o espaço do sidebar */
+.grid{
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+}
+
+  .cardGrid{
+    display: grid;
+    grid-template-columns: repeat(4, var(--cardW));
+    gap: 16px;
+    padding: 14px 6px 10px;
+    justify-content: center;
+    align-items: start;
+  }
+
+  /* deixa a carta parecer o objeto (menos “moldura”) */
+  .cardFace{
+    border: none;
+    box-shadow: 0 16px 46px rgba(0,0,0,.55);
+  }
+
+  /* meta line acompanha a largura da carta (já usa --cardW) */
+  .cardMetaLine{
+    padding: 8px 10px;
+  }
+}
 
 /* Card container (controls foil vars) */
 .card{
@@ -381,7 +429,7 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
 
 /* animação do reveal (suaviza o "virar") */
 .card.revealFlip .cardInner{
-  transition: transform 1100ms cubic-bezier(.12,.95,.16,1);
+  transition: transform 2400ms cubic-bezier(.12,.95,.16,1);
 }
 
 /* quando NÃO revelada, a frente não deve aparecer */
@@ -428,7 +476,8 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
 
 /* hover lift */
 .card:hover{ transform: translateY(-1px); }
-.card:hover .cardInner{ transition: transform .06s ease; }
+/* v4.2: não deixar o hover matar o tempo do flip */
+.card:not(.revealFlip):hover .cardInner{ transition: transform .06s ease; }
 
 /* ============ META LINE (set + nome + valor + tratamento) ============ */
 .cardMetaLine{
