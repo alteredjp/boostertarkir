@@ -916,3 +916,50 @@ button,
     transform: scale(0.99);
   }
 }
+/* =========================
+   v4.2 — STICKY DASHBOARD
+   Arcane-style footer
+========================= */
+
+.stickyStats{
+  background: rgba(8,10,14,.82);
+}
+
+.stickyItem{
+  display:flex;
+  flex-direction:column;
+  gap: 4px;
+}
+
+.dualCount{
+  display:flex;
+  gap: 14px;
+  align-items:center;
+  font-weight: 950;
+}
+
+.dualCount .count{
+  display:flex;
+  align-items:center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+/* cores por raridade */
+.count.mythic{ color: var(--r-mythic); }
+.count.rare{ color: var(--r-rare); }
+.count.uncommon{ color: var(--r-uncommon); }
+.count.common{ color: var(--r-common); }
+
+/* ícone do set em tamanho fixo */
+.dualCount .setIcon{
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: currentColor;
+  opacity: .9;
+}
+
+/* EV positivo / negativo */
+#stickyCompared.positive{ color: #38d386; }
+#stickyCompared.negative{ color: #ff5b6e; }

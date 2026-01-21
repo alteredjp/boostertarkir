@@ -176,28 +176,58 @@
 <!-- STICKY FOOTER (Main stats em tempo real) -->
 <div id="stickyStats" class="stickyStats hidden">
   <div class="stickyInner">
+
+    <!-- Total -->
     <div class="stickyItem">
-      <div class="statLabel">Total</div>
+      <div class="statLabel">Total value</div>
       <div class="statValue" id="stickyTotal">$0.00</div>
     </div>
+
+    <!-- vs EV -->
     <div class="stickyItem">
-      <div class="statLabel">vs EV</div>
+      <div class="statLabel">Compared to EV</div>
       <div class="statValue" id="stickyCompared">—</div>
     </div>
+
+    <!-- Mythics / Rares -->
     <div class="stickyItem">
-      <div class="statLabel">R/M</div>
-      <div class="statValue" id="stickyRM">0/0</div>
+      <div class="statLabel">Mythics / Rares</div>
+      <div class="statValue dualCount">
+        <span class="count mythic">
+          <span class="setIcon"></span>
+          <span id="stickyMythic">0</span>
+        </span>
+        <span class="count rare">
+          <span class="setIcon"></span>
+          <span id="stickyRare">0</span>
+        </span>
+      </div>
     </div>
+
+    <!-- Foils -->
     <div class="stickyItem">
-      <div class="statLabel">Foil/Halo</div>
-      <div class="statValue" id="stickyFoils">0/0</div>
+      <div class="statLabel">Foil cards</div>
+      <div class="statValue dualCount">
+        <span class="count uncommon">
+          <span class="setIcon"></span>
+          <span id="stickyFoilUnc">0</span>
+        </span>
+        <span class="count common">
+          <span class="setIcon"></span>
+          <span id="stickyFoilCom">0</span>
+        </span>
+      </div>
     </div>
+
+    <!-- Qualidade -->
     <div class="stickyItem qualityMini">
-      <div class="statLabel">Qualidade</div>
+      <div class="statLabel">Booster quality</div>
       <div class="statValue" id="stickyQuality">—</div>
     </div>
+
   </div>
 </div>
+
 
 <!-- MODAL PREVIEW -->
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true">

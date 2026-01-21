@@ -57,8 +57,12 @@ window.addEventListener("load", () => {
     stickyStats: document.getElementById("stickyStats"),
     stickyTotal: document.getElementById("stickyTotal"),
     stickyCompared: document.getElementById("stickyCompared"),
-    stickyRM: document.getElementById("stickyRM"),
-    stickyFoils: document.getElementById("stickyFoils"),
+	
+    stickyMythic: document.getElementById("stickyMythic"),
+    stickyRare: document.getElementById("stickyRare"),
+    stickyFoilUnc: document.getElementById("stickyFoilUnc"),
+    stickyFoilCom: document.getElementById("stickyFoilCom"),
+	
     stickyQuality: document.getElementById("stickyQuality"),
 
     modal: document.getElementById("modal"),
@@ -978,6 +982,14 @@ if (wrap) {
     }
     return lo;
   }
+  function qualityTier(p) {
+  if (p < 10) return "Terrible";
+  if (p < 30) return "Bad";
+  if (p < 55) return "Mid";
+  if (p < 80) return "Good";
+  return "Amazing";
+}
+
 
   function updateStatsUI() {
     const cost = getBoosterCost();
@@ -1020,11 +1032,18 @@ if (wrap) {
     if (packStats) {
       const p = percentileForValue(total);
       if (p != null) {
-        qText = `${p}º pct`;
-        qPct = clamp(p, 0, 100);
-        UI.qualityFill.style.width = qPct + "%";
-        UI.qualityLabel.textContent = qText;
-        UI.qualityHint.textContent = `Seu total atual está acima de ${p}% dos boosters simulados.`;
+const tier = qualityTier(p);
+
+qText = `${tier} • ${p}º pct`;
+qPct = clamp(p, 0, 100);
+
+UI.qualityFill.style.width = qPct + "%";
+UI.qualityLabel.textContent = qText;
+UI.qualityHint.textContent = `Seu total atual está acima de ${p}% dos boosters simulados.`;
+
+// sticky: Arcane style (só o texto)
+UI.stickyQuality.textContent = tier;
+
       } else {
         UI.qualityFill.style.width = "0%";
         UI.qualityLabel.textContent = "—";
@@ -1036,11 +1055,29 @@ if (wrap) {
       UI.qualityHint.textContent = "Gerando distribuição (EV/Mediana/Percentis)…";
     }
 
-    UI.stickyTotal.textContent = money(total);
-    UI.stickyCompared.textContent = compared;
-    UI.stickyRM.textContent = `${rares}/${mythics}`;
-    UI.stickyFoils.textContent = `${foils}/${halos}`;
-    UI.stickyQuality.textContent = packStats ? qText : "…";
+// Total
+UI.stickyTotal.textContent = money(total);
+
+// vs EV (cor dinâmica)
+UI.stickyCompared.textContent = compared;
+const evValue = packStats?.ev ?? null;
+
+UI.stickyCompared.classList.toggle("positive", evValue != null && total >= evValue);
+UI.stickyCompared.classList.toggle("negative", evValue != null && total < evValue);
+
+
+// Mythics / Rares
+UI.stickyMythic.textContent = mythics;
+UI.stickyRare.textContent = rares;
+
+// Foils (commons + uncommons)
+UI.stickyFoilUnc.textContent = foils;
+UI.stickyFoilCom.textContent = halos;
+
+// Qualidade do booster
+// stickyQuality já foi setado como tier lá em cima quando packStats existe
+if (!packStats) UI.stickyQuality.textContent = "…";
+
   }
 
   /* =========================
