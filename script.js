@@ -482,6 +482,11 @@ window.addEventListener("load", () => {
 
     el.style.setProperty("--mx", clamp(mx, 0, 100).toFixed(2) + "%");
     el.style.setProperty("--my", clamp(my, 0, 100).toFixed(2) + "%");
+
+    // compat Arcane-style (glare/shine usam pointer-x/y)
+    el.style.setProperty("--pointer-x", clamp(mx, 0, 100).toFixed(2) + "%");
+    el.style.setProperty("--pointer-y", clamp(my, 0, 100).toFixed(2) + "%");
+
     el.style.setProperty("--rx", rx.toFixed(2) + "deg");
     el.style.setProperty("--ry", ry.toFixed(2) + "deg");
 
@@ -494,6 +499,11 @@ window.addEventListener("load", () => {
   const reset = () => {
     el.style.setProperty("--mx", "50%");
     el.style.setProperty("--my", "50%");
+
+    // compat Arcane-style
+    el.style.setProperty("--pointer-x", "50%");
+    el.style.setProperty("--pointer-y", "50%");
+   
     el.style.setProperty("--rx", "0deg");
     el.style.setProperty("--ry", "0deg");
     if (inner) {
@@ -1183,6 +1193,7 @@ if (!packStats) UI.stickyQuality.textContent = "…";
           <div class="cardFace cardFront">
             <img alt="" loading="lazy"/>
             <div class="cardFx"></div>
+            <div class="cardGlare"></div>
           </div>
         </div>
       `;

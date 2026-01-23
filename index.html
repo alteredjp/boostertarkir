@@ -123,48 +123,64 @@
         </div>
 
         <div id="cardGrid" class="cardGrid"></div>
+	</section>
 
-        <!-- LOG -->
-        <section id="logPanel" class="hidden">
-          <h2 style="margin-top:18px;">Log</h2>
-          <p class="summary">Tudo que foi revelado neste pack.</p>
-          <ol id="packLog" class="pack"></ol>
-        </section>
-      </section>
+<!-- SIDEBAR -->
+<aside class="side">
 
-      <!-- SIDEBAR -->
-      <aside class="side">
-        <!-- Vault -->
-        <div id="vaultPanel" class="collection hidden">
-          <div class="sideTop">
-            <h2>Vault</h2>
-            <div class="sideActions">
-              <button id="btnVaultClear" class="danger">Limpar</button>
-            </div>
-          </div>
+  <!-- Vault -->
+  <details id="vaultPanel" class="sidePanel" open>
+    <summary class="sideHead">
+      <span class="sideTitle">Vault</span>
+      <span class="sideChevron">▾</span>
+    </summary>
 
-          <p class="hint">
-            Preços vêm do Scryfall e mudam no máximo 1x/dia.
-          </p>
+    <div class="sideBody">
+      <div class="sideActions">
+        <button id="btnVaultClear" class="danger">Limpar</button>
+      </div>
 
-          <div id="vaultStats" class="stats">—</div>
-          <div id="vaultList" class="collectionList"></div>
-        </div>
+      <p class="hint">
+        Preços vêm do Scryfall e mudam no máximo 1x/dia.
+      </p>
 
-        <!-- Binder -->
-        <div id="binderPanel" class="collection hidden">
-          <div class="sideTop">
-            <h2>Binder</h2>
-          </div>
+      <div id="vaultStats" class="stats">—</div>
+      <div id="vaultList" class="collectionList"></div>
+    </div>
+  </details>
 
-          <p class="hint">
-            Binder completo do set — slots faltantes ficam escurecidos até você abrir.
-          </p>
+  <!-- Binder -->
+  <details id="binderPanel" class="sidePanel binderPanel" open>
+    <summary class="sideHead">
+      <span class="sideTitle">Binder</span>
+      <span class="sideChevron">▾</span>
+    </summary>
 
-          <div id="binderStats" class="stats">—</div>
-          <div id="binderGrid" class="binderGrid"></div>
-        </div>
-      </aside>
+    <div class="sideBody">
+      <p class="hint">
+        Binder completo do set — slots faltantes ficam escurecidos até você abrir.
+      </p>
+
+      <div id="binderStats" class="stats">—</div>
+      <div id="binderGrid" class="binderGrid"></div>
+    </div>
+  </details>
+
+  <!-- Log -->
+  <details id="logPanel" class="sidePanel" open>
+    <summary class="sideHead">
+      <span class="sideTitle">Log</span>
+      <span class="sideChevron">▾</span>
+    </summary>
+
+    <div class="sideBody">
+      <p class="summary">Tudo que foi revelado neste pack.</p>
+      <ol id="packLog" class="pack"></ol>
+    </div>
+  </details>
+
+</aside>
+
     </div>
   </section>
 

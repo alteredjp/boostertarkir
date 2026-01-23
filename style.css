@@ -119,8 +119,11 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
   gap: 14px;
 }
 @media (max-width: 980px){
-  .grid{ grid-template-columns: 1fr; }
+  .grid{
+    grid-template-columns: 1fr; /* em telas pequenas, sidebar vai pra baixo */
+  }
 }
+
 
 .summary{
   margin: 6px 0 0;
@@ -449,6 +452,44 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
   opacity: .95;
 }
 
+/* ============ GLARE LAYER (Arcane-like) ============ */
+.cardGlare{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity .18s ease;
+
+  background:
+    radial-gradient(
+      320px 240px at var(--pointer-x, var(--mx)) var(--pointer-y, var(--my)),
+      rgba(255,255,255,.28),
+      rgba(255,255,255,.10) 22%,
+      transparent 60%
+    );
+  filter: blur(.15px);
+}
+
+/* Glare aparece com mais intenção quando revelada */
+.card.revealed .cardGlare{
+  opacity: .55;
+}
+
+/* No hover (desktop) */
+.card:hover .cardGlare{
+  opacity: .65;
+}
+
+/* Facedown: discreto */
+.card.facedown .cardGlare{
+  opacity: .10;
+}
+.card.facedown:hover .cardGlare{
+  opacity: .18;
+}
+
 /* base foil shimmer */
 .card.revealed.foil .cardFx{
   background:
@@ -476,6 +517,12 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
 
 /* hover lift */
 .card:hover{ transform: translateY(-1px); }
+
+/* ============ FACEDOWN HOVER (ritual) ============ */
+.card.facedown:hover{
+  transform: translateY(-2px) scale(1.02);
+}
+
 /* v4.2: não deixar o hover matar o tempo do flip */
 .card:not(.revealFlip):hover .cardInner{ transition: transform .06s ease; }
 
@@ -906,8 +953,9 @@ button,
 @media (pointer: coarse){
   button:hover{ transform:none; }
   .card:hover{ transform:none; }
+  .card.facedown:hover{ transform:none; }
   .binderCell:hover{ transform:none; }
-
+  
   /* deixa a UI com cara de touch: feedback no toque */
   .card:active .cardInner{
     transform: scale(0.985);
@@ -963,3 +1011,172 @@ button,
 /* EV positivo / negativo */
 #stickyCompared.positive{ color: #38d386; }
 #stickyCompared.negative{ color: #ff5b6e; }
+
+/* =========================
+   v4.2.x — SIDEBAR PANELS (Binder/Vault/Log)
+   - Todos visíveis
+   - Cada painel com scroll próprio
+   - Header abre/fecha (details/summary)
+========================= */
+
+@media (min-width: 1100px){
+  :root{
+    --stickyH: 96px;  /* ajuste fino se precisar */
+    --sideTop: 16px;
+  }
+
+  /* Sidebar fixa no viewport, mas NÃO rola inteira */
+.side{
+  position: sticky;
+  top: var(--sideTop);
+
+  /* 🔥 teto REAL da sidebar (viewport) */
+  height: calc(100vh - var(--sideTop) - var(--stickyH));
+  max-height: calc(100vh - var(--sideTop) - var(--stickyH));
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  /* evita o “tapete infinito” escapar */
+  overflow: hidden;
+  min-height: 0;
+}
+
+  /* Painel */
+  .sidePanel{
+    background: rgba(12,14,18,.55);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* Header clicável */
+  .sideHead{
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 12px;
+    background: rgba(0,0,0,.18);
+  }
+  .sideHead::-webkit-details-marker{ display:none; }
+
+  .sideTitle{
+    font-weight: 900;
+    letter-spacing: .02em;
+  }
+  .sideChevron{
+    opacity: .7;
+    transform: rotate(0deg);
+    transition: transform .18s ease;
+  }
+  .sidePanel:not([open]) .sideChevron{
+    transform: rotate(-90deg);
+  }
+
+  /* Corpo rolável */
+  .sideBody{
+    padding: 10px 12px 12px;
+    overflow: auto;
+    min-height: 0;
+  }
+
+/* =========================
+   v4.2.2.7 — Sidebar scroll REAL (sem tapete infinito)
+   - Vault fixo (240px) quando aberto
+   - Binder ocupa o resto quando aberto
+   - Fechados viram “barra”
+   - Scroll interno confiável (sem height: calc(100% ...))
+========================= */
+
+:root{
+  --sideHeadH: 46px;
+}
+
+/* Painel precisa controlar o “miolo” sem depender de % */
+.sidePanel{
+  display: flex;
+  flex-direction: column;
+  min-height: 0;         /* 👈 essencial pra scroll em flex */
+  overflow: hidden;      /* 👈 impede o conteúdo “vazar” e inflar o painel */
+}
+
+/* Header com altura previsível */
+.sideHead{
+  min-height: var(--sideHeadH);
+}
+
+/* ===== Distribuição de altura (só no desktop da sidebar) */
+@media (min-width: 1100px){
+  /* Sidebar tem um teto real no viewport (sem crescer infinito) */
+  .side{
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* Vault */
+  #vaultPanel{ flex: 0 0 auto; }          /* fechado = só header */
+  #vaultPanel[open]{ flex: 0 0 240px; }   /* aberto = 240px */
+
+  /* Binder */
+  #binderPanel{ flex: 0 0 auto; }         /* fechado = só header */
+  #binderPanel[open]{ flex: 1 1 auto; }   /* aberto = ocupa o resto */
+
+  /* Corpo: por padrão fechado “não existe” */
+  .sideBody{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+
+    max-height: 0;      /* fechado */
+    opacity: 0;
+    padding: 0 12px;
+
+    transition:
+      max-height 260ms cubic-bezier(.2,.9,.2,1),
+      opacity 160ms ease,
+      padding 200ms ease;
+  }
+
+  /* Aberto: libera scroll + padding */
+  .sidePanel[open] .sideBody{
+    max-height: 9999px; /* 👈 grande o suficiente; o painel que manda no tamanho */
+    overflow: auto;
+    opacity: 1;
+    padding: 10px 12px 12px;
+  }
+
+  /* (opcional) deixa o scroll mais “presente” no Windows */
+  .sideBody{
+    scrollbar-gutter: stable both-edges;
+  }
+}
+
+  /* Mantém ações alinhadas */
+  .sideActions{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+
+  /* Esconde botões do topo (Binder/Vault/Log) sem quebrar JS */
+  #btnVault, #btnBinder, #btnLog{
+    display: none !important;
+  }
+}
+/* =========================
+   v4.2.2.1 — Sidebar: remove Log
+========================= */
+#logPanel,
+#btnLog{
+  display: none !important;
+}
