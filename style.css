@@ -563,23 +563,12 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
   white-space:nowrap;
 }
 
-/* set icon via mask + vars */
-.setIcon{
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
-  background: var(--icon-color, var(--r-common));
+/* Set symbol real (Keyrune) */
+.setSymbol{
+  font-size: 18px;
+  line-height: 1;
   opacity: .95;
-
-  -webkit-mask-image: var(--icon-url);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: contain;
-
-  mask-image: var(--icon-url);
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.35));
 }
 
 /* ============ MONEY BOX ============ */
@@ -999,14 +988,8 @@ button,
 .count.uncommon{ color: var(--r-uncommon); }
 .count.common{ color: var(--r-common); }
 
-/* ícone do set em tamanho fixo */
-.dualCount .setIcon{
-  width: 16px;
-  height: 16px;
-  border-radius: 5px;
-  background: currentColor;
-  opacity: .9;
-}
+/* set symbol em tamanho fixo (Keyrune) */
+.dualCount .setSymbol{ font-size: 16px; }
 
 /* EV positivo / negativo */
 #stickyCompared.positive{ color: #38d386; }
@@ -1179,4 +1162,126 @@ button,
 #logPanel,
 #btnLog{
   display: none !important;
+}
+/* ===== Arcane-style META extras ===== */
+
+.metaRight{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.rarityPip{
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 1000;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(0,0,0,.85);
+  background: rgba(255,255,255,.75);
+  border: 1px solid rgba(255,255,255,.25);
+  box-shadow: 0 6px 14px rgba(0,0,0,.25);
+}
+
+/* pinta o pip com a cor da raridade (fica bem “catálogo”) */
+.rarityPip.rarity-common{ background: rgba(255,255,255,.70); }
+.rarityPip.rarity-uncommon{ background: rgba(130,220,160,.75); }
+.rarityPip.rarity-rare{ background: rgba(255,215,120,.78); }
+.rarityPip.rarity-mythic{ background: rgba(255,140,100,.80); }
+
+.finishBadge{
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 1000;
+  font-size: 11px;
+  letter-spacing: .5px;
+  border: 1px solid rgba(255,255,255,.20);
+  background: rgba(0,0,0,.30);
+  color: rgba(255,255,255,.92);
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(0,0,0,.25);
+}
+
+/* “skins” do badge por tratamento */
+.finishBadge.finish-nf{ opacity: .75; }
+.finishBadge.finish-foil{ background: rgba(90,170,255,.20); }
+.finishBadge.finish-halo{ background: rgba(255,170,70,.22); }
+.finishBadge.finish-surge{ background: rgba(255,90,210,.20); }
+.finishBadge.finish-etched{ background: rgba(200,200,200,.18); }
+.finishBadge.finish-gilded{ background: rgba(255,215,120,.18); }
+
+/* =========================
+   v5.1 — ARCANE HEADER
+========================= */
+
+.top.topArcane{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 16px;
+}
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.brandTitle{
+  font-weight: 950;
+  letter-spacing: .2px;
+  font-size: 16px;
+  opacity: .95;
+}
+
+.brandSub{
+  font-size: 12px;
+  opacity: .65;
+}
+
+.actionRows{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  align-items:flex-end;
+}
+
+.actionRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap: 8px;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+.subtleRow{
+  opacity: .95;
+}
+
+.dividerV{
+  width: 1px;
+  height: 22px;
+  background: rgba(255,255,255,.10);
+  margin: 0 4px;
+  border-radius: 99px;
+}
+
+/* Em telas menores, header vira coluna */
+@media (max-width: 900px){
+  .top.topArcane{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .actionRows{
+    align-items:stretch;
+  }
+  .actionRow{
+    justify-content:flex-start;
+  }
 }

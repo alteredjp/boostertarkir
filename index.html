@@ -6,6 +6,9 @@
   <meta name="color-scheme" content="dark" />
   <title>Tarkir: Dragonstorm — Collector Booster Simulator</title>
 
+  <!-- Keyrune (set symbols) -->
+  <link href="https://cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
+
   <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,31 +16,42 @@
 <body>
 
 <div class="wrap">
-  <header class="top">
-    <div>
-      <h1>Collector Booster — Tarkir: Dragonstorm</h1>
-      <p class="sub">Simulador premium de abertura (foil, stats e binder).</p>
-    </div>
+<header class="top topArcane">
+  <div class="brand">
+    <div class="brandTitle">Booster Simulator</div>
+    <div class="brandSub">Collector Booster • <span id="uiSetName">Tarkir: Dragonstorm</span></div>
+  </div>
 
-    <div class="actions">
+  <div class="actionRows">
+    <div class="actionRow">
       <button id="btnLoad" class="ghost">Carregar cartas</button>
       <button id="btnOpen" disabled>ABRIR BOOSTER</button>
-
       <button id="btnNext" disabled>Revelar próxima</button>
-      <button id="btnToLand" class="ghost" disabled>Revelar até a Land</button>
-      <button id="btnAll" class="ghost" disabled>Revelar todas</button>
+
+      <div class="dividerV"></div>
 
       <button id="btnAuto" class="ghost" disabled>Auto: OFF</button>
       <button id="btnSound" class="ghost">Som: ON</button>
+    </div>
+
+    <div class="actionRow subtleRow">
+      <button id="btnToLand" class="ghost" disabled>Até a Land</button>
+      <button id="btnAll" class="ghost" disabled>Revelar tudo</button>
+
+      <div class="dividerV"></div>
 
       <button id="btnLog" class="ghost" disabled>Log</button>
       <button id="btnVault" class="ghost" disabled>Vault</button>
       <button id="btnBinder" class="ghost" disabled>Binder</button>
 
+      <div class="dividerV"></div>
+
       <button id="btnWipeCache" class="ghost">Limpar cache</button>
       <button id="btnResetAll" class="danger">RESET TOTAL</button>
     </div>
-  </header>
+  </div>
+</header>
+
 
   <section class="panel">
     <div class="status">
@@ -210,11 +224,11 @@
       <div class="statLabel">Mythics / Rares</div>
       <div class="statValue dualCount">
         <span class="count mythic">
-          <span class="setIcon"></span>
+          <i class="ss ss-fw setSymbol" data-role="stickySetSymbol" data-rarity="mythic" aria-hidden="true"></i>
           <span id="stickyMythic">0</span>
         </span>
         <span class="count rare">
-          <span class="setIcon"></span>
+          <i class="ss ss-fw setSymbol" data-role="stickySetSymbol" data-rarity="rare" aria-hidden="true"></i>
           <span id="stickyRare">0</span>
         </span>
       </div>
@@ -225,11 +239,11 @@
       <div class="statLabel">Foil cards</div>
       <div class="statValue dualCount">
         <span class="count uncommon">
-          <span class="setIcon"></span>
+          <i class="ss ss-fw setSymbol" data-role="stickySetSymbol" data-rarity="uncommon" aria-hidden="true"></i>
           <span id="stickyFoilUnc">0</span>
         </span>
         <span class="count common">
-          <span class="setIcon"></span>
+          <i class="ss ss-fw setSymbol" data-role="stickySetSymbol" data-rarity="common" aria-hidden="true"></i>
           <span id="stickyFoilCom">0</span>
         </span>
       </div>

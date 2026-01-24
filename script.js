@@ -78,6 +78,25 @@ window.addEventListener("load", () => {
     modalSlot: document.getElementById("modalSlot"),
     btnModalClose: document.getElementById("btnModalClose"),
   };
+  
+  // --- Set identity (MTGJSON) ---
+  // Scryfall continua sendo a fonte da carta. MTGJSON vira a fonte da identidade do set.
+  let SETLIST = null; // { [setCodeLower]: { name, keyruneCode } }
+
+  function getCurrentSetCode() {
+    return String(window.SET_CODE || "tdm").toLowerCase();
+  }
+
+  (async () => {
+    try {
+      SETLIST = await loadMtgjsonSetList();
+      applySetIdentityToUI(getCurrentSetCode());
+      applyKeyruneToStickyCounts(getCurrentSetCode());
+    } catch (e) {
+      console.warn("MTGJSON SetList: não foi possível carregar.", e);
+    }
+  })();
+
 
   /* =========================
      STORAGE
@@ -86,7 +105,6 @@ window.addEventListener("load", () => {
   const VAULT_KEY = "nyx_vault_v1";
   const SMALL_CACHE_KEY = "nyx_tdm_cache_small_v6";
   const BINDER_KEY = "nyx_binder_tdm_v1";
-  const SET_ICON_KEY = "nyx_set_icons_v1";
   const PACK_STATS_KEY = "nyx_pack_stats_v1";
 
   /* =========================
@@ -109,11 +127,80 @@ window.addEventListener("load", () => {
   let binderIndex = null; // Map<number, cardObj>
   let binderMax = 0;
 
-  // set icons
-  let setIconMap = {};
+  // set symbols (Keyrune)
+  // (não guardamos SVGs nem URLs por carta — o set symbol vem do Keyrune)
 
   // pack distribution stats
   let packStats = null;
+
+// =========================
+// v5.2 — Set Identity (MTGJSON + Keyrune)
+// =========================
+// Fonte da verdade para "qual símbolo usar": MTGJSON SetList (keyruneCode).
+// Render do símbolo: Keyrune (<i class="ss ss-<code> ss-rare"></i> etc.).
+const MTGJSON_SETLIST_KEY = "nyx_mtgjson_setlist_v1";
+const MTGJSON_SETLIST_URL = "https://mtgjson.com/api/v5/SetList.json";
+
+async function loadMtgjsonSetList() {
+  // 1) cache
+  try {
+    const cached = localStorage.getItem(MTGJSON_SETLIST_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+
+  // 2) fetch
+  const res = await fetch(MTGJSON_SETLIST_URL);
+  if (!res.ok) throw new Error("Falha ao buscar SetList no MTGJSON.");
+  const data = await res.json();
+
+  const map = {};
+  for (const s of (data?.data || [])) {
+    if (!s?.code) continue;
+    const code = String(s.code).toLowerCase();
+    map[code] = {
+      name: s.name || code.toUpperCase(),
+      keyruneCode: (s.keyruneCode || code).toLowerCase(),
+    };
+  }
+
+  // 3) salva cache
+  try {
+    localStorage.setItem(MTGJSON_SETLIST_KEY, JSON.stringify(map));
+  } catch (e) {}
+
+  return map;
+}
+
+function getKeyruneCodeFromSet(setCode) {
+  const code = String(setCode || "").toLowerCase();
+  return (SETLIST?.[code]?.keyruneCode || code || "").toLowerCase();
+}
+
+function applySetIdentityToUI(setCode) {
+  const code = String(setCode || "").toLowerCase();
+  const name = SETLIST?.[code]?.name;
+  const el = document.getElementById("uiSetName");
+  if (el && name) el.textContent = name;
+}
+
+function rarityToKeyruneClass(rarity) {
+  const r = String(rarity || "common").toLowerCase();
+  if (r === "mythic") return "ss-mythic";
+  if (r === "rare") return "ss-rare";
+  if (r === "uncommon") return "ss-uncommon";
+  return "ss-common";
+}
+
+function applyKeyruneToStickyCounts(setCode) {
+  const keyrune = getKeyruneCodeFromSet(setCode);
+  if (!keyrune) return;
+
+  const icons = document.querySelectorAll('[data-role="stickySetSymbol"]');
+  icons.forEach((el) => {
+    const r = el.getAttribute("data-rarity") || "common";
+    el.className = `ss ss-${keyrune} ss-fw ${rarityToKeyruneClass(r)} setSymbol`;
+  });
+}
 
   /* =========================
      HELPERS
@@ -416,48 +503,7 @@ window.addEventListener("load", () => {
     setTimeout(() => playTone(1318.5, 200, "triangle", 0.24), 60);
   }
 
-  /* =========================
-     SET ICONS
-  ========================= */
-  function loadSetIconCache() {
-    const cached = safeJsonParse(localStorage.getItem(SET_ICON_KEY));
-    if (!cached || !cached.createdAt || !cached.map) return null;
-    const ageH = (Date.now() - cached.createdAt) / (1000 * 60 * 60);
-    if (ageH > 72) return null;
-    return cached.map;
-  }
-  function saveSetIconCache(map) {
-    try {
-      localStorage.setItem(SET_ICON_KEY, JSON.stringify({ createdAt: Date.now(), map }));
-    } catch {}
-  }
-  async function fetchSetIcon(setCode) {
-    const res = await fetch(`https://api.scryfall.com/sets/${setCode}`);
-    if (!res.ok) throw new Error("Set fetch HTTP " + res.status);
-    const data = await res.json();
-    return data.icon_svg_uri || "";
-  }
-  async function ensureSetIcons() {
-    const cached = loadSetIconCache();
-    if (cached) {
-      setIconMap = cached;
-      return;
-    }
-    const codes = ["tdm", "tdc", "spg", "ttdm"];
-    const map = {};
-    await Promise.all(
-      codes.map(async (c) => {
-        try {
-          const svg = await fetchSetIcon(c);
-          map[c] = { svg };
-        } catch {
-          map[c] = { svg: "" };
-        }
-      })
-    );
-    setIconMap = map;
-    saveSetIconCache(map);
-  }
+  // (Set symbols agora são Keyrune + MTGJSON. Não cacheamos SVG por set.)
 
   /* =========================
      FOIL / TILT TRACKING
@@ -911,51 +957,78 @@ if (wrap) {
   /* =========================
      META LINE (set icon + name + price + treatment)
   ========================= */
-  function getSetIconSvg(setCode) {
-    return setIconMap?.[setCode]?.svg || "";
-  }
+function finishToLabel(finish) {
+  const f = String(finish || "nonfoil").toLowerCase();
 
-  function ensureMetaLine(cardEl, entry) {
-    const old = cardEl.querySelector(".cardMetaLine");
-    if (old) old.remove();
+  // Labels “humanos” (e já preparados pro laboratório FF)
+  if (f === "surgefoil" || f === "surge") return "SURGE";
+  if (f === "halofoil" || f === "halo") return "HALO";
+  if (f === "etched" || f === "etchedfoil") return "ETCHED";
+  if (f === "gilded") return "GILDED";
+  if (f === "foil") return "FOIL";
+  if (f === "nonfoil" || f === "nf") return "NF";
 
-    const treatment =
-      entry.finish === "halofoil" ? "HALO" :
-      entry.finish === "foil" ? "FOIL" : "NF";
+  // fallback genérico (não quebra se vier algo novo do Scryfall)
+  return f.toUpperCase();
+}
 
-    const setCode = entry.card?.set || "";
-    const svg = getSetIconSvg(setCode);
-    const r = entry.card?.rarity || "common";
+function finishToClass(finish) {
+  const f = String(finish || "nonfoil").toLowerCase();
+  if (f.includes("surge")) return "finish-surge";
+  if (f.includes("halo")) return "finish-halo";
+  if (f.includes("etched")) return "finish-etched";
+  if (f.includes("gilded")) return "finish-gilded";
+  if (f === "foil") return "finish-foil";
+  return "finish-nf";
+}
 
-    const iconSpan = document.createElement("span");
-    iconSpan.className = "setIcon";
-    iconSpan.style.setProperty("--icon-url", svg ? `url("${svg}")` : "none");
-    iconSpan.style.setProperty("--icon-color", rarityColorVar(r));
-    iconSpan.title = setCode.toUpperCase();
+function ensureMetaLine(cardEl, entry) {
+  const old = cardEl.querySelector(".cardMetaLine");
+  if (old) old.remove();
 
-    const line = document.createElement("div");
-    line.className = "cardMetaLine";
-    line.appendChild(iconSpan);
+  const setCode = entry.card?.set || "";
+  const r = entry.card?.rarity || "common";
+  const keyrune = getKeyruneCodeFromSet(setCode);
 
-    const name = document.createElement("span");
-    name.className = "cardName";
-    name.textContent = entry.card?.name || "—";
-    name.title = "Abrir preview";
-    name.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      openModalFor(entry);
-    });
+  // símbolo real do set (Keyrune), com raridade embutida pela classe
+  const icon = document.createElement("i");
+  icon.className = `ss ss-${keyrune} ss-fw ${rarityToKeyruneClass(r)} setSymbol`;
+  icon.title = setCode ? setCode.toUpperCase() : "";
 
-    const right = document.createElement("span");
-    right.className = "cardPrice";
-    right.textContent = `${money(entry.price || 0)} • ${treatment}`;
-    right.title = treatment;
+  const name = document.createElement("span");
+  name.className = "cardName";
+  name.textContent = entry.card?.name || "—";
+  name.title = "Abrir preview";
+  name.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    openModalFor(entry);
+  });
 
-    line.appendChild(name);
-    line.appendChild(right);
+  // badge de tratamento (SURGE / FOIL / etc)
+  const finishLabel = finishToLabel(entry.finish);
+  const badge = document.createElement("span");
+  badge.className = `finishBadge ${finishToClass(entry.finish)}`;
+  badge.textContent = finishLabel;
+  badge.title = finishLabel;
 
-    cardEl.appendChild(line);
-  }
+  // preço separado (fica mais “catálogo”)
+  const price = document.createElement("span");
+  price.className = "cardPrice";
+  price.textContent = money(entry.price || 0);
+
+  const right = document.createElement("span");
+  right.className = "metaRight";
+  right.appendChild(badge);
+  right.appendChild(price);
+
+  const line = document.createElement("div");
+  line.className = "cardMetaLine";
+  line.appendChild(icon);
+  line.appendChild(name);
+  line.appendChild(right);
+
+  cardEl.appendChild(line);
+}
 
   /* =========================
      STATS
@@ -1241,12 +1314,27 @@ if (!packStats) UI.stickyQuality.textContent = "…";
 
       cardEl.classList.add("revealed");
       cardEl.classList.remove("rarity-common", "rarity-uncommon", "rarity-rare", "rarity-mythic", "rarity-token");
+	  
+	  // limpa classes de finish (pra não “vazar” visual entre cartas)
+      cardEl.classList.remove(
+      "foil",
+      "halo",
+      "surge",
+      "etched",
+      "gilded"
+     );
+
 
       if (entry.kind === "token") cardEl.classList.add("rarity-token");
       else cardEl.classList.add(rarityClass(entry.card?.rarity));
 
-      if (entry.finish === "foil") cardEl.classList.add("foil");
-      if (entry.finish === "halofoil") cardEl.classList.add("halo");
+      const f = String(entry.finish || "nonfoil").toLowerCase();
+      if (f === "foil") cardEl.classList.add("foil");
+      if (f.includes("halo")) cardEl.classList.add("halo");
+      if (f.includes("surge")) cardEl.classList.add("surge");
+      if (f.includes("etched")) cardEl.classList.add("etched");
+      if (f.includes("gilded")) cardEl.classList.add("gilded");
+
 
       if (entry.isNew) cardEl.classList.add("newCard");
       if (entry.isDup) cardEl.classList.add("dupCard");
@@ -1732,7 +1820,7 @@ if (!packStats) UI.stickyQuality.textContent = "…";
   UI.btnWipeCache?.addEventListener("click", () => {
     localStorage.removeItem(SMALL_CACHE_KEY);
     localStorage.removeItem(BINDER_KEY);
-    localStorage.removeItem(SET_ICON_KEY);
+    localStorage.removeItem(MTGJSON_SETLIST_KEY);
     localStorage.removeItem(PACK_STATS_KEY);
     setStatus("", "Cache limpo. Clique em “Carregar cartas”.");
   });
