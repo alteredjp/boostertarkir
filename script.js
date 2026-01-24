@@ -99,88 +99,6 @@ function getCurrentSetCode() {
   return String(window.SET_CODE || "tdm").toLowerCase();
 }
 
-  // =========================
-  // v5 — Set Identity (MTGJSON + Keyrune)
-  // =========================
-  let SETLIST = null;
-  const MTGJSON_SETLIST_KEY = "nyx_mtgjson_setlist_v1";
-  const MTGJSON_SETLIST_URL = "https://mtgjson.com/api/v5/SetList.json";
-
-  async function loadMtgjsonSetList() {
-    try {
-      const cached = localStorage.getItem(MTGJSON_SETLIST_KEY);
-      if (cached) return JSON.parse(cached);
-    } catch {}
-
-    const res = await fetch(MTGJSON_SETLIST_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error("Falha ao buscar SetList no MTGJSON. HTTP " + res.status);
-    const data = await res.json();
-
-    const map = {};
-    for (const s of (data?.data || [])) {
-      if (!s?.code) continue;
-      const code = String(s.code).toLowerCase();
-      map[code] = { name: s.name || s.code, keyruneCode: (s.keyruneCode || code).toLowerCase() };
-    }
-
-    try { localStorage.setItem(MTGJSON_SETLIST_KEY, JSON.stringify(map)); } catch {}
-    return map;
-  }
-
-  function getKeyruneCodeFromSet(setCode) {
-    const code = String(setCode || "").toLowerCase();
-    return (SETLIST?.[code]?.keyruneCode || code || "").toLowerCase();
-  }
-
-  function rarityToKeyruneClass(rarity) {
-    const r = String(rarity || "common").toLowerCase();
-    if (r === "mythic") return "ss-mythic";
-    if (r === "rare") return "ss-rare";
-    if (r === "uncommon") return "ss-uncommon";
-    return "ss-common";
-  }
-
-  function applySetIdentityToUI(setCode) {
-    const code = String(setCode || "").toLowerCase();
-    const name = SETLIST?.[code]?.name;
-    const el = document.getElementById("uiSetName");
-    if (el && name) el.textContent = name;
-  }
-
-  function applyKeyruneToStickyCounts(setCode) {
-    const keyrune = getKeyruneCodeFromSet(setCode);
-    if (!keyrune) return;
-
-    const icons = document.querySelectorAll('[data-role="stickySetSymbol"]');
-    icons.forEach((el) => {
-      const r = el.getAttribute("data-rarity") || "common";
-      el.className = `ss ss-${keyrune} ss-fw ${rarityToKeyruneClass(r)} setSymbol`;
-    });
-  }
-
-  async function ensureSetIdentityReady(setCode) {
-    if (SETLIST) {
-      applySetIdentityToUI(setCode);
-      applyKeyruneToStickyCounts(setCode);
-      return true;
-    }
-    try {
-      SETLIST = await loadMtgjsonSetList();
-      applySetIdentityToUI(setCode);
-      applyKeyruneToStickyCounts(setCode);
-      return true;
-    } catch (e) {
-      console.warn("MTGJSON SetList: não foi possível carregar. Usando fallback por setCode.", e);
-      applyKeyruneToStickyCounts(setCode);
-      if (location.protocol === "file:") {
-        console.warn("Dica: abrindo via file:// pode bloquear algumas APIs. Use Live Server (VSCode) pra evitar CORS.");
-      }
-      return false;
-    }
-  }
-  ensureSetIdentityReady(getCurrentSetCode());
-
-
 
   /* =========================
      STORAGE
@@ -219,54 +137,101 @@ function getCurrentSetCode() {
   let packStats = null;
 
 // =========================
-// v5.1 — Set Icons (Scryfall)
+// v5.2 — Set Symbols (MTGJSON + Keyrune)
 // =========================
-const SET_ICONS_KEY = "mtg_set_icons_v1";
+//
+// Scryfall continua como fonte de CARTA.
+// MTGJSON vira fonte da IDENTIDADE do set (keyruneCode).
+//
+// Render do símbolo: Keyrune (CSS), usando classes:
+//   <i class="ss ss-fw ss-<keyruneCode> ss-rare"></i>
+//
+// Fonte do SetList:
+//   https://mtgjson.com/api/v5/SetList.json
+//
+const MTGJSON_SETLIST_URL = "https://mtgjson.com/api/v5/SetList.json";
+const MTGJSON_SETLIST_CACHE_KEY = "nyx_mtgjson_setlist_v1";
 
-async function loadSetIconsMap() {
-  // 1) tenta cache
+let mtgjsonSetMap = null; // { [scryfallSetCodeLower]: { name, keyruneCode } }
+
+async function loadMtgjsonSetList() {
+  // 1) cache
   try {
-    const cached = localStorage.getItem(SET_ICONS_KEY);
+    const cached = localStorage.getItem(MTGJSON_SETLIST_CACHE_KEY);
     if (cached) return JSON.parse(cached);
   } catch (e) {}
 
-  // 2) busca na fonte
-  const res = await fetch("https://api.scryfall.com/sets");
-  if (!res.ok) throw new Error("Falha ao buscar sets no Scryfall.");
+  // 2) fetch
+  const res = await fetch(MTGJSON_SETLIST_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error("Falha ao carregar MTGJSON SetList.");
   const data = await res.json();
 
   const map = {};
-  for (const s of (data.data || [])) {
+  for (const s of (data?.data || [])) {
     if (!s || !s.code) continue;
-    // icon_svg_uri existe na resposta de sets do Scryfall
-    map[String(s.code).toLowerCase()] = {
-      name: s.name || s.code.toUpperCase(),
-      icon: s.icon_svg_uri || null
+    const code = String(s.code).toLowerCase();
+    map[code] = {
+      name: s.name || code.toUpperCase(),
+      keyruneCode: (s.keyruneCode || code).toLowerCase()
     };
   }
 
   // 3) salva cache
-  try {
-    localStorage.setItem(SET_ICONS_KEY, JSON.stringify(map));
-  } catch (e) {}
-
+  try { localStorage.setItem(MTGJSON_SETLIST_CACHE_KEY, JSON.stringify(map)); } catch (e) {}
   return map;
 }
 
-function applySetIconToUI(setCode, setIconsMap) {
-  const code = String(setCode || "").toLowerCase();
-  const icon = setIconsMap?.[code]?.icon;
-
-  if (icon) {
-    document.documentElement.style.setProperty("--setIconUrl", `url("${icon}")`);
-  } else {
-    document.documentElement.style.setProperty("--setIconUrl", "none");
-  }
-
-  // opcional: mostrar nome no header novo
-  const el = document.getElementById("uiSetName");
-  if (el && setIconsMap?.[code]?.name) el.textContent = setIconsMap[code].name;
+function getCurrentSetCode() {
+  return String(window.SET_CODE || "tdm").toLowerCase();
 }
+
+function getKeyruneCodeFor(setCode) {
+  const code = String(setCode || "").toLowerCase();
+  const k = mtgjsonSetMap?.[code]?.keyruneCode;
+  return (k || code || "mtg").toLowerCase();
+}
+
+function rarityToKeyruneClass(rarity) {
+  const r = String(rarity || "common").toLowerCase();
+  if (r === "mythic") return "ss-mythic";
+  if (r === "rare") return "ss-rare";
+  if (r === "uncommon") return "ss-uncommon";
+  return "ss-common";
+}
+
+function applySetSymbolToUI(setCode) {
+  const code = String(setCode || "").toLowerCase();
+  const key = getKeyruneCodeFor(code);
+
+  // atualiza nome do set (opcional)
+  const nameEl = document.getElementById("uiSetName");
+  if (nameEl && mtgjsonSetMap?.[code]?.name) nameEl.textContent = mtgjsonSetMap[code].name;
+
+  // atualiza os símbolos do rodapé (mythic/rare/uncommon/common)
+  const els = document.querySelectorAll(".setSymbol[data-role='stickySetSymbol']");
+  els.forEach((el) => {
+    // limpa qualquer ss-<...> antigo (mantendo ss/ss-fw)
+    [...el.classList].forEach((c) => {
+      if (c.startsWith("ss-") && !c.startsWith("ss-common") && !c.startsWith("ss-uncommon") && !c.startsWith("ss-rare") && !c.startsWith("ss-mythic")) {
+        el.classList.remove(c);
+      }
+    });
+    el.classList.add(`ss-${key}`);
+    el.classList.add(rarityToKeyruneClass(el.dataset.rarity || "common"));
+  });
+}
+
+// carrega SetList sem quebrar o app se falhar (fallback: usa setCode direto)
+(async () => {
+  try {
+    mtgjsonSetMap = await loadMtgjsonSetList();
+  } catch (e) {
+    console.warn("MTGJSON SetList: não foi possível carregar (fallback ativo).", e);
+    mtgjsonSetMap = {};
+  } finally {
+    applySetSymbolToUI(getCurrentSetCode());
+  }
+})();
 
   /* =========================
      HELPERS
@@ -1131,42 +1096,48 @@ function ensureMetaLine(cardEl, entry) {
   if (old) old.remove();
 
   const setCode = entry.card?.set || "";
+  const svg = getSetIconSvg(setCode);
   const r = entry.card?.rarity || "common";
+  // símbolo real do set (Keyrune) — raridade embutida por classe
+  const key = getKeyruneCodeFor(setCode);
+  const symbol = document.createElement("i");
+  symbol.className = `ss ss-fw setSymbol ss-${key} ${rarityToKeyruneClass(r)}`;
+  symbol.title = setCode ? setCode.toUpperCase() : "";
 
-  const meta = document.createElement("div");
-  meta.className = "cardMetaLine";
-
-  // símbolo real do set (Keyrune)
-  const keyrune = getKeyruneCodeFromSet(setCode);
-  const icon = document.createElement("i");
-  icon.className = `ss ss-${keyrune} ss-fw ${rarityToKeyruneClass(r)} setSymbol`;
-  icon.title = setCode ? setCode.toUpperCase() : "";
-  meta.appendChild(icon);
-
-  // nome
-  const name = document.createElement("span");
+const name = document.createElement("span");
   name.className = "cardName";
   name.textContent = entry.card?.name || "—";
-  meta.appendChild(name);
+  name.title = "Abrir preview";
+  name.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    openModalFor(entry);
+  });
 
-  // badge de acabamento (Foil/Surge/etc.)
-  const finishText = humanFinishLabel(entry);
-  if (finishText) {
-    const finish = document.createElement("span");
-    finish.className = "finishBadge";
-    finish.textContent = finishText;
-    meta.appendChild(finish);
-  }
+  // badge de tratamento (SURGE / FOIL / etc)
+  const finishLabel = finishToLabel(entry.finish);
+  const badge = document.createElement("span");
+  badge.className = `finishBadge ${finishToClass(entry.finish)}`;
+  badge.textContent = finishLabel;
+  badge.title = finishLabel;
 
-  // preço
+  // preço separado (fica mais “catálogo”)
   const price = document.createElement("span");
   price.className = "cardPrice";
-  price.textContent = formatUSD(entry.price || 0);
-  meta.appendChild(price);
+  price.textContent = money(entry.price || 0);
 
-  cardEl.appendChild(meta);
+  const right = document.createElement("span");
+  right.className = "metaRight";
+  right.appendChild(badge);
+  right.appendChild(price);
+
+  const line = document.createElement("div");
+  line.className = "cardMetaLine";
+  line.appendChild(symbol);
+  line.appendChild(name);
+  line.appendChild(right);
+
+  cardEl.appendChild(line);
 }
-
 
   /* =========================
      STATS
@@ -1782,7 +1753,7 @@ if (!packStats) UI.stickyQuality.textContent = "…";
       UI.btnLoad.disabled = true;
 
       const binderOk = loadBinderCache();
-      await ensureSetIdentityReady(getCurrentSetCode());
+      await ensureSetIcons();
 
       const cached = loadSmallCache();
       if (cached && cached.pools) {
@@ -1993,14 +1964,3 @@ if (!packStats) UI.stickyQuality.textContent = "…";
   refreshVaultUI();
   refreshBinderUI();
 });
-
-function humanFinishLabel(entry) {
-  const c = entry?.card || {};
-  const finishes = Array.isArray(c.finishes) ? c.finishes.map((x) => String(x).toLowerCase()) : [];
-
-  // Ordem importa: surge > etched > foil
-  if (finishes.includes("surge")) return "Surge";
-  if (finishes.includes("etched")) return "Etched";
-  if (finishes.includes("foil")) return "Foil";
-  return "";
-}
