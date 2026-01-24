@@ -563,13 +563,10 @@ button.danger{ background:#2a0f14; border-color:#4c1a22; }
   white-space:nowrap;
 }
 
-/* Set symbol real (Keyrune) */
-.setSymbol{
-  font-size: 18px;
-  line-height: 1;
-  opacity: .95;
-  filter: drop-shadow(0 0 2px rgba(0,0,0,.35));
-}
+/* set icon via mask + vars */
+/* set icon como IMAGEM (não mask) + glow por raridade */
+
+/* glow por raridade (usa as vars que você já tem) */
 
 /* ============ MONEY BOX ============ */
 .money{
@@ -988,8 +985,30 @@ button,
 .count.uncommon{ color: var(--r-uncommon); }
 .count.common{ color: var(--r-common); }
 
-/* set symbol em tamanho fixo (Keyrune) */
-.dualCount .setSymbol{ font-size: 16px; }
+/* ícone do set em tamanho fixo */
+.dualCount .setIcon{
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+
+  background-image: var(--icon-url, none);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+
+  opacity: .95;
+
+  /* fallback: se não tiver SVG, volta pro “quadradinho” */
+  box-shadow: inset 0 0 0 999px currentColor;
+  -webkit-mask-image: var(--setIconUrl, none);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 16px 16px;
+  mask-image: var(--setIconUrl, none);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 16px 16px;
+}
 
 /* EV positivo / negativo */
 #stickyCompared.positive{ color: #38d386; }
@@ -1285,3 +1304,13 @@ button,
     justify-content:flex-start;
   }
 }
+
+/* Set symbol real (Keyrune) */
+.setSymbol{
+  font-size: 18px;
+  line-height: 1;
+  opacity: .95;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.35));
+}
+
+.dualCount .setSymbol{ font-size: 16px; }
